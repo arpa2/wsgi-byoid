@@ -53,6 +53,71 @@ SASL authentication.
 SASL at this moment.  We have asked others to help out with this.
 
 
+## HTTP User handled with WSGI User
+
+Authentication users are client identities.  Most protocols also recognise
+a user on the server side, but HTTP does not.  And if it does, it is
+supposed to be the same as the client identity, which is thereby forced to
+fall under the server's realm.  We see the resuls everywhere; the web asks
+you to create an account on many sites you visit.  This is not practical.
+
+We therefore proposed an extension to HTTP that explicitly indicates the
+User as part of the resource name space identification on the server or,
+in URI terms, of the authority.  If we move towards peer-to-peer HTTP
+service, this is going to be
+[helpful for routing requests](https://github.com/tlswg/draft-ietf-tls-esni/issues/206),
+perhaps in combination with encrypted portions in the initial TLS messages.
+
+This extension to HTTP is straightforward, and it has been implemented
+for WSGI in the `WSGI_User` class.  This reads the `User` header,
+removes `%`-escapes, applies a syntax check that defaults to the
+[NAI syntax](https://tools.ietf.org/html/rfc7542#section-2.2)
+with a default-on option to also allow empty strings, and if it
+matches, passes the value in a `LOCAL_USER` environment variable
+and will signal the impact on caching by adding a `Vary: User`
+response header.
+
+**Current status:** The code has been entered, but is untested.
+
+### Idea: Basic Authentication maps to User
+
+The old adagio for addressing a user on the server was to use
+Basic authentication, possibly without a password.  The headers
+that send this format can be mapped to the `User` header to allow
+trivial backward compatibility.  When no password is supplied,
+it is furthermore safe to remove this authenitcation header.
+An option can inidcate whether to also remove the header if
+an ignored password is to be removed.
+
+This might be done with flags:
+
+  * `map_basic=False` would map Basic authentication with empty
+    or filled passwords to the `User` header if the latter is
+    no supplied yet; it removes the form with empty password.
+    If the `User` header already exists the value is ignored
+    (or compared to match) but the authentication header is
+    removed as always.
+  * `map_basic_always=False` does the same, but it also removes
+    the form with a filled password (which means that further
+    stages will ignore any such password).
+
+### Idea: Tilde maps to User
+
+A popular server-side convention, that unfortunately does not
+imply semantics for clients like `User` can, is to begin a URL
+path with `/~username`.  This pattern might be recognised as an
+alternative to the `User` header.
+
+This might be done with a flag:
+
+  * `map_tilde=False` would map the `/~username` form to a
+    `User` header set to `username` and remove the form from
+    the path component of the URI.  When the `User` header
+    exists, the path component is still removed, but it does
+    not have any impact on the `User` header (though it may
+    be compared to match).
+
+
 ## Bring Your Own IDentity
 
 We are considering a BYOID mechanism based on Diameter servers
