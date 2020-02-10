@@ -21,7 +21,7 @@ setuptools.setup (
 
 	# What?
 	name = 'arpa2wsgi',
-	version = '0.1.0',
+	version = '0.2.0',
 	url = 'https://github.com/arpa2/wsgi-middleware',
 	description = 'WSGI Middleware for Identity Framework in ARPA2 Projects that implement the InternetWide Architecture',
 	long_description = readme,
