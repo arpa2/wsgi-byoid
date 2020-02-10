@@ -23,20 +23,23 @@ setuptools.setup (
 	name = 'arpa2wsgi',
 	version = '0.2.0',
 	url = 'https://github.com/arpa2/wsgi-middleware',
-	description = 'WSGI Middleware for Identity Framework in ARPA2 Projects that implement the InternetWide Architecture',
+	description = 'WSGI Middleware to "Bring Your Own IDentity" to a web server',
 	long_description = readme,
 	long_description_type = 'text/markdown',
 
 	# Who?
-	author = 'Rick van Rein (for the ARPA2 Project)',
+	author = 'Rick van Rein (ARPA2 developer)',
 	author_email = 'rick@openfortress.nl',
 
 	# Where?
+	namespace_packages = [
+		'arpa2.wsgi'
+	],
 	packages = [
-		'arpa2wsgi'
+		'arpa2.wsgi.byoid'
 	],
 	package_dir = {
-		'arpa2wsgi': here
+		'arpa2.wsgi.byoid': here
 	},
 
 	# How?
