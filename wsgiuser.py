@@ -23,7 +23,7 @@
 
 
 import re
-import urllib
+import urllib.parse
 
 # The default identity pattern is an empty string =or= a NAI.
 # The NAI syntax is defined in Section 2.1 of RFC 7542.
@@ -64,7 +64,7 @@ re_nai = re.compile ('^%s$' % rex_nai)
 def _curried_add_vary (outer_resp):
 	def _add_vary (status, resphdrs):
 		resphdrs.append ( ('Vary','User') )
-		outer_resp (state, resphrs)
+		outer_resp (status, resphdrs)
 	return _add_vary
 
 
@@ -113,6 +113,7 @@ class WSGI_User (object):
 			user_syntax = re.compile (user_syntax)
 		self.user_syntax = user_syntax
 		self.allow_empty = allow_empty
+		self.inner_app   = inner_app
 
 	def __call__ (self, outer_env, outer_resp):
 		"""This function makes WSGI-User instances
@@ -125,11 +126,11 @@ class WSGI_User (object):
 		if user is None:
 			# No header found
 			pass
-		elif user == '' and allow_empty:
+		elif user == '' and self.allow_empty:
 			# Accept empty value of User header
 			local_user = ''
 		else:
-			local_user = urllib.unquote (user)
+			local_user = urllib.parse.unquote (user)
 			if not self.user_syntax.match (local_user):
 				# Syntax wrong -- ignore User header
 				local_user = None
@@ -140,5 +141,5 @@ class WSGI_User (object):
 		if local_user is not None:
 			inner_env ['LOCAL_USER'] = local_user
 			inner_resp = _curried_add_vary (outer_resp)
-		self.inner_app (inner_env, inner_resp)
+		return self.inner_app (inner_env, inner_resp)
 

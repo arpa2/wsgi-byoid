@@ -77,7 +77,8 @@ matches, passes the value in a `LOCAL_USER` environment variable
 and will signal the impact on caching by adding a `Vary: User`
 response header.
 
-**Current status:** The code has been entered, but is untested.
+**Current status:** The code performs well in our test programs.
+Please try it live and report to us!
 
 ### Idea: Basic Authentication maps to User
 
