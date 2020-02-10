@@ -1,11 +1,11 @@
-# README for WSGI-USER
+# README for WSGI-User
 
 > *WSGI allows stacks of HTTP-processing layers to form a service.
 > The HTTP User header expresses a client-side awareness of a username
 > that it would like to access on the server, if specific resource are
 > available.  The server may ignore this or modify its responses.*
 
-WSGI-USER middleware filters traffic that holds a `HTTP_USER` environment
+WSGI-User middleware filters traffic that holds a `HTTP_USER` environment
 variable, taken literally from the `User` header, and transforms it into
 a `LOCAL_USER` variable after a number of checks:
 
@@ -35,22 +35,22 @@ useful, so empty strings pass by default.  This can be overridden with
 The default **syntax check** validates against the format of a
 [Network Access Identifier](https://tools.ietf.org/html/rfc7542#section-2.2)
 because that has broad recognition as a username format.  If you prefer to
-use another format, you can either supply a syntax string or a regular
-expression object output by `re.compile` as a substitute.  Please remember
+use another format, you can either supply a syntax as a regular expression
+input or output object of the `re.compile` function.  Please remember
 to scan between `^` and `$` and accept that empty strings are not checked
 against your syntax.  You can pass the syntax as `user_syntax=...` upon
 instantiation of `WSGI_User`.
 
-Note that **percent decoding** does not guarantee more than a proper
+Note that **percent decoding** does not check beyond a proper escaping
 syntax of two hex digits after every `%`.  After percent unescaping
 there may be colons `:` in the output, as well as binary codes such
-as 0x00 and 0xff bytes and illegal UTF-8 sequences.  This is why it is
-a good idea to validate the input.  The NAI default syntax validates,
+as 0x00 and 0xff and illegal UTF-8 sequences.  Most applications would
+benefit from validation of this input.  The NAI default syntax validates,
 among others, that proper UTF-8 is being supplied.  The regular expression
-for this is externally available as `re_utf8_xtra_char` covering
+for this is externally available as `rex_utf8_xtra_char` covering
 [UTF-8 sequences of 2, 3 or 4 bytes](https://tools.ietf.org/html/rfc3629#section-4)
 and only excluding the 1-byte sequences that overlap ASCII codes
-(and for good reason; ASCII often introduces grammar).
+(which is often helpful, because ASCII provides syntax with switch points).
 
 
 ## Support for Tilde Server Conventions
