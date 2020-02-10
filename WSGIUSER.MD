@@ -53,3 +53,70 @@ and only excluding the 1-byte sequences that overlap ASCII codes
 (and for good reason; ASCII often introduces grammar).
 
 
+## Support for Tilde Server Conventions
+
+When servers want to reveal users, they can opt for a local convention
+in the path name.  These are never useful to clients, though guesswork
+is triggered by them.  The conceptual clarity of the `User` header
+provides the semantics necessary for inductive processing, and is
+thereby better for automation.
+
+The tilde convention is implemented for paths that start with the pattern
+`/~username` and continues with resources specific to the user.  The
+beginning is stripped off the path and used as a `User` header value in
+the `LOCAL_USER` variable.  Syntax checking is applied as always, but
+stripping is always done.
+
+The following extra flag influences this facility:
+
+  * `map_tilde=True` maps the `/~username` form to a
+    `User: username` header and remove the `/~username` form from
+    the path component of the URI.  When the `User` header
+    already exists, it is not overwritten but compared, and
+    an error is reported when the values differ.
+
+
+## Support for Basic Authentication
+
+Before the `User` header was available, a pattern to address a user
+was through Basic authentication, either with or without a password.
+This habit conflates client-side and server-side notions of user names,
+and invalidates more advanced patterns where clients are members that
+address a group's resources, or someone else's as may be permitted
+by an Access Control List.  The conflation is also the probably cause
+of the common pattern where websites require a user to make a password
+on their site, rather than invite them to
+[Bring Your Own IDentity](http://internetwide.org/blog/2015/04/22/id-2-byoid.html).
+
+When sent without password, it may be interpreted as an attempt to
+address a user under conflation of client-side and server-side notions
+of user, and so it makes sense to send the `User` header for it.  This
+is the default behaviour of WSGI-User, given that it is used for a
+server that supposedly supports the header.  The Basic authentication
+header without password is then removed.
+
+When sent with password, it may be that the client is trying to
+authenticate with a fixed password as a credential.  This form is
+also translated like a `User` header, but the header is kept by
+default, so it may also serve authentication with a client identity.
+
+The translation does not involve % unescaping, because the Basic
+header is sent under base64-encoding.  The one missing facility is
+that no colon `:` is possible in the user name.  Syntax is checked,
+as well as the check for empty user names.
+
+If the `User` header is already provided, its value will be compared
+and, upon differences, an error will be returned.
+
+The following extra flags influence this facility:
+
+  * `map_basic=True` maps Basic authentication with empty
+    or filled passwords like is done for the `User` header,
+    except for % unescaping; the header is removed when the
+    password is empty.
+  * `map_basic_always=False` does the same, but it also removes
+    the form with a filled password (which means that further
+    stages will ignore any such password).
+  * `proxy_auth=False` is used to work as an HTTP proxy, rather
+    than as an HTTP server.  This differentiates the header used.
+

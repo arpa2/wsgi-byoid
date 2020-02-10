@@ -77,46 +77,20 @@ matches, passes the value in a `LOCAL_USER` environment variable
 and will signal the impact on caching by adding a `Vary: User`
 response header.
 
+By default, WSGI-User implements backward compatibility with two
+older habits:
+
+  * Basic authentication with a username and empty password
+  * Local server convention for `/~username` paths
+
+Both are a bit cluttered in comparison to the `User` header.
+Basic authentication conflates client and server identities and
+invalidates intermediate caching; local server conventions do not
+permit inferencing in clients or by their human users (and makes
+them resort to inconsistent, deductive reasoning).
+
 **Current status:** The code performs well in our test programs.
 Please try it live and report to us!
-
-### Idea: Basic Authentication maps to User
-
-The old adagio for addressing a user on the server was to use
-Basic authentication, possibly without a password.  The headers
-that send this format can be mapped to the `User` header to allow
-trivial backward compatibility.  When no password is supplied,
-it is furthermore safe to remove this authenitcation header.
-An option can inidcate whether to also remove the header if
-an ignored password is to be removed.
-
-This might be done with flags:
-
-  * `map_basic=False` would map Basic authentication with empty
-    or filled passwords to the `User` header if the latter is
-    no supplied yet; it removes the form with empty password.
-    If the `User` header already exists the value is ignored
-    (or compared to match) but the authentication header is
-    removed as always.
-  * `map_basic_always=False` does the same, but it also removes
-    the form with a filled password (which means that further
-    stages will ignore any such password).
-
-### Idea: Tilde maps to User
-
-A popular server-side convention, that unfortunately does not
-imply semantics for clients like `User` can, is to begin a URL
-path with `/~username`.  This pattern might be recognised as an
-alternative to the `User` header.
-
-This might be done with a flag:
-
-  * `map_tilde=False` would map the `/~username` form to a
-    `User` header set to `username` and remove the form from
-    the path component of the URI.  When the `User` header
-    exists, the path component is still removed, but it does
-    not have any impact on the `User` header (though it may
-    be compared to match).
 
 
 ## Bring Your Own IDentity

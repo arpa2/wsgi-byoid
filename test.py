@@ -85,98 +85,119 @@ def testwsgi (test_name, app, envin, envout={}, jsonin=None, jsonout=None):
 	# Did the test succeed?
 	result = 'SUCCESS' if ok else 'FAILURE'
 	print ('%s on test %s' % (result,test_name))
+	global all_ok
+	all_ok = all_ok and ok
 	return ok
+
+
+# Start with all_ok set positively
+#
+all_ok = True
 
 
 # Check the test code itself with no test in between
 #
 envin = {
+	"PATH_INFO": "/",
 	"TEST": "Home Game" }
 envout = { }
 jsonout = {
+	"PATH_INFO": "/",
 	"TEST": "Home Game" }
-assert (testwsgi ('test_self', wsgi_env2json, envin, envout, jsonout=jsonout))
+testwsgi ('test_self', wsgi_env2json, envin, envout, jsonout=jsonout)
 
 
 # Check the wsgiuser tool with "User: john"
 #
 envin = {
+	"PATH_INFO": "/",
 	"HTTP_USER": "john" }
 envout = {
 	"Vary": "User" }
 jsonout = {
+	"PATH_INFO": "/",
 	"HTTP_USER": "john",
 	"LOCAL_USER": "john" }
 import wsgiuser
 wu = wsgiuser.WSGI_User (wsgi_env2json)
-assert (testwsgi ('user_john', wu, envin, envout, jsonout=jsonout))
+testwsgi ('user_john', wu, envin, envout, jsonout=jsonout)
 
 
 # Check the wsgiuser tool with empty User header (accepting it)
 #
 envin = {
+	"PATH_INFO": "/",
 	"HTTP_USER": "" }
 envout = {
 	"Vary": "User" }
 jsonout = {
+	"PATH_INFO": "/",
 	"HTTP_USER": "",
 	"LOCAL_USER": "" }
 import wsgiuser
 wu = wsgiuser.WSGI_User (wsgi_env2json, allow_empty=True)
-assert (testwsgi ('user_empty_accept', wu, envin, envout, jsonout=jsonout))
+testwsgi ('user_empty_accept', wu, envin, envout, jsonout=jsonout)
 
 
 # Check the wsgiuser tool with empty User header (rejecting it)
 #
 envin = {
+	"PATH_INFO": "/",
 	"HTTP_USER": "" }
 envout = {
 	"Vary": None }
 jsonout = {
+	"PATH_INFO": "/",
 	"HTTP_USER": "" }
 import wsgiuser
 wu = wsgiuser.WSGI_User (wsgi_env2json, allow_empty=False)
-assert (testwsgi ('user_empty_reject', wu, envin, envout, jsonout=jsonout))
+testwsgi ('user_empty_reject', wu, envin, envout, jsonout=jsonout)
 
 
 # Check the wsgiuser tool with "User: jøhn" (UTF-8 for ø is %c3%b8)
 #
 envin = {
+	"PATH_INFO": "/",
 	"HTTP_USER": "j%c3%b8hn" }
 envout = {
 	"Vary": "User" }
 jsonout = {
+	"PATH_INFO": "/",
 	"HTTP_USER": "j%c3%b8hn",
 	"LOCAL_USER": "jøhn" }
 import wsgiuser
 wu = wsgiuser.WSGI_User (wsgi_env2json)
-assert (testwsgi ('user_jøhn_percentescape', wu, envin, envout, jsonout=jsonout))
+testwsgi ('user_jøhn_percentescape', wu, envin, envout, jsonout=jsonout)
 
 
 # Check the wsgiuser tool with a User that erroneously holds a colon ':'
 #
 envin = {
+	"PATH_INFO": "/",
 	"HTTP_USER": "john:sekreet" }
 envout = {
 	"Vary": None }
 jsonout = {
+	"PATH_INFO": "/",
 	"HTTP_USER": "john:sekreet" }
 import wsgiuser
 wu = wsgiuser.WSGI_User (wsgi_env2json)
-assert (testwsgi ('user_colonreject', wu, envin, envout, jsonout=jsonout))
+testwsgi ('user_colonreject', wu, envin, envout, jsonout=jsonout)
 
 
 # Check the wsgiuser tool with a User that has an error is % escaping
 #
 envin = {
+	"PATH_INFO": "/",
 	"HTTP_USER": "j%c%3b8hn" }
 envout = {
 	"Vary": None }
 jsonout = {
+	"PATH_INFO": "/",
 	"HTTP_USER": "j%c%3b8hn" }
 import wsgiuser
 wu = wsgiuser.WSGI_User (wsgi_env2json)
-assert (testwsgi ('user_jøhn_errorescape', wu, envin, envout, jsonout=jsonout))
+testwsgi ('user_jøhn_errorescape', wu, envin, envout, jsonout=jsonout)
 
 
 # Check the wsgiuser tool with a non-UTF-8 escape code %c3%b8%b8
@@ -184,14 +205,89 @@ assert (testwsgi ('user_jøhn_errorescape', wu, envin, envout, jsonout=jsonout))
 #  -> jsonout is complete, and does not list LOCAL_USER
 #
 envin = {
+	"PATH_INFO": "/",
 	"HTTP_USER": "j%c3%b8%b8hn" }
 envout = {
 	"Vary": None }
 jsonout = {
+	"PATH_INFO": "/",
 	"HTTP_USER": "j%c3%b8%b8hn" }
 import wsgiuser
 wu = wsgiuser.WSGI_User (wsgi_env2json)
-assert (testwsgi ('user_j%c3%b8%b8hn_utf8failure', wu, envin, envout, jsonout=jsonout))
+testwsgi ('user_j%c3%b8%b8hn_utf8failure', wu, envin, envout, jsonout=jsonout)
 
 
+# Check the wsgiuser tool with "Authorization: Basic <john:>"
+#
+envin = {
+	"PATH_INFO": "/",
+	"HTTP_AUTHORIZATION": "Basic am9objo=" }
+envout = { }
+jsonout = {
+	"PATH_INFO": "/",
+	"LOCAL_USER": "john" }
+import wsgiuser
+wu = wsgiuser.WSGI_User (wsgi_env2json, map_basic=True)
+testwsgi ('basic_john', wu, envin, envout, jsonout=jsonout)
 
+
+# Check the wsgiuser tool with "Authorization: Basic <john:sekreet>" (retained)
+#
+envin = {
+	"PATH_INFO": "/",
+	"HTTP_AUTHORIZATION": "Basic am9objpzZWtyZWV0" }
+envout = { }
+jsonout = {
+	"PATH_INFO": "/",
+	"HTTP_AUTHORIZATION": "Basic am9objpzZWtyZWV0",
+	"LOCAL_USER": "john" }
+import wsgiuser
+wu = wsgiuser.WSGI_User (wsgi_env2json, map_basic=True, map_basic_always=False)
+testwsgi ('basic_john_retained', wu, envin, envout, jsonout=jsonout)
+
+
+# Check the wsgiuser tool with "Authorization: Basic <john:sekreet>" (dropped)
+#
+envin = {
+	"PATH_INFO": "/",
+	"HTTP_AUTHORIZATION": "Basic am9objpzZWtyZWV0" }
+envout = { }
+jsonout = {
+	"PATH_INFO": "/",
+	"LOCAL_USER": "john" }
+import wsgiuser
+wu = wsgiuser.WSGI_User (wsgi_env2json, map_basic=False, map_basic_always=True)
+testwsgi ('basic_john_dropped', wu, envin, envout, jsonout=jsonout)
+
+
+# Check the wsgiuser tool with "/~john" path
+#
+envin = {
+	"PATH_INFO": "/~john" }
+envout = { }
+jsonout = {
+	"PATH_INFO": "/",
+	"LOCAL_USER": "john" }
+import wsgiuser
+wu = wsgiuser.WSGI_User (wsgi_env2json, map_tilde=True)
+testwsgi ('pathinfo_john', wu, envin, envout, jsonout=jsonout)
+
+
+# Check the wsgiuser tool with "/~john/much/more" path
+#
+envin = {
+	"PATH_INFO": "/~john/much/more" }
+envout = { }
+jsonout = {
+	"PATH_INFO": "/much/more",
+	"LOCAL_USER": "john" }
+import wsgiuser
+wu = wsgiuser.WSGI_User (wsgi_env2json, map_tilde=True)
+testwsgi ('pathinfo_john', wu, envin, envout, jsonout=jsonout)
+
+
+# Report overall result
+#
+if not all_ok:
+	sys.stderr.write ('\n### THERE WERE FAILED TESTS ###\n\n')
+	sys.exit (1)
