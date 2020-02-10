@@ -82,7 +82,7 @@ def _curried_add_vary (outer_resp):
 # Error responder to indicate that user names did not match
 #
 def mismatch_app (environ, start_response):
-	status = ''
+	status = '400 Bad Request'
 	response_headers = [('Content-Type', 'text/plain')]
 	start_response (status, response_headers)
 	return ['You provided several server-side user resource that did not match:\n - User header as per draft-vanrein-http-unauth-user\n - Basic authentication user name\n - Path information format /~username\nPlease check that these match or talk to your server administrator\n']
