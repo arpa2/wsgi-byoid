@@ -126,9 +126,13 @@ class WSGI_User (object):
 		if user is None:
 			# No header found
 			pass
-		elif user == '' and self.allow_empty:
-			# Accept empty value of User header
-			local_user = ''
+		elif user == '':
+			if self.allow_empty:
+				# Accept empty value of User header
+				local_user = ''
+		elif ':' in user:
+			# Do not accept colons in User
+			pass
 		else:
 			local_user = urllib.parse.unquote (user)
 			if not self.user_syntax.match (local_user):

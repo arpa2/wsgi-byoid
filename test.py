@@ -153,6 +153,19 @@ wu = wsgiuser.WSGI_User (wsgi_env2json)
 assert (testwsgi ('user_jøhn_percentescape', wu, envin, envout, jsonout=jsonout))
 
 
+# Check the wsgiuser tool with a User that erroneously holds a colon ':'
+#
+envin = {
+	"HTTP_USER": "john:sekreet" }
+envout = {
+	"Vary": None }
+jsonout = {
+	"HTTP_USER": "john:sekreet" }
+import wsgiuser
+wu = wsgiuser.WSGI_User (wsgi_env2json)
+assert (testwsgi ('user_colonreject', wu, envin, envout, jsonout=jsonout))
+
+
 # Check the wsgiuser tool with a User that has an error is % escaping
 #
 envin = {
